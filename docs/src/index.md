@@ -18,13 +18,13 @@ For a comparable package in python, see [Kymatio](https://www.kymat.io/).
 using ScatteringTransform, Wavelets, Plots
 ```
 
-As an example signal, lets work with the doppler signal:
+As an example signal, let's work with a doppler signal:
 
 ```@example ex
 using Wavelets, Plots
 N = 2047
-f = testfunction(N, "Doppler")
-plot(f, legend=false, title="Doppler signal")
+signal = testfunction(N, "Doppler")
+plot(signal, legend=false, title="Doppler signal")
 savefig("figures/rawDoppler.svg"); #hide
 nothing # hide
 ```
@@ -32,12 +32,13 @@ nothing # hide
 ![](figures/rawDoppler.svg)
 
 First we need to make a `scatteringTransform` instance, which will create and store all of the necessary filters, subsampling operators, nonlinear functions, etc.
-The parameters are described in the `scatteringTransform` type.
+The parameters are described in the `scatteringTransform` type. The function `reshapeInputs` converts data matrices and vectors into a usable form and returns the reshaped array and its dimensions. It works for any shaped input signal. 
 Since the Doppler signal is smooth, but with varying frequency, let's set the wavelet family `cw=Morlet(π)` specifies the mother wavelet to be a Morlet wavelet with mean frequency π, and frequency spacing `β=2`:
 
 ```@example ex
 using ScatteringTransform, ContinuousWavelets
-St = scatteringTransform((N, 1, 1), 2, cw=Morlet(π), β=2, σ=abs)
+f, dims = reshapeInputs(signal)
+St = scatteringTransform(dims, 2, cw=Morlet(π), β=2, σ=abs)
 sf = St(f)
 ```
 

@@ -15,4 +15,5 @@ ScatteringTransform.normalize
 ScatteringTransform.processArgs
 ScatteringTransform.getParameters
 ScatteringTransform.extractAddPadding
+ScatteringTransform.reshapeInputs
 ```

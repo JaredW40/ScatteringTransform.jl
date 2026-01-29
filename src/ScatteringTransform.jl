@@ -43,8 +43,8 @@ end
 
 include("utilities.jl")
 export getWavelets, flatten, roll, importantCoords, batchOff, getParameters, getMeanFreq, computeLoc
-export roll, wrap, flatten
+export roll, wrap, flatten, reshapeInputs
 include("adjoints.jl")
 include("scatteringplots.jl")
-export plotZerothLayer1D, plotFirstLayer1D, gifFirstLayer, plotFirstLayer1DAll, plotFirstLayer, plotSecondLayer, plotSecondLayer1D, plotSecondLayerSpecificPath, plotSecondLayer1DSubsetGif, plotSecondLayerFixAndVary, jointPlot
+export plotZerothLayer1D, plotFirstLayer1DSubset, gifFirstLayer1D, plotFirstLayer1DAll, plotFirstLayer1D, plotSecondLayer1DOld, plotSecondLayer1DSpecificPath, gifSecondLayer1DSubset, plotSecondLayer1DFixAndVary, plotSecondLayer1D, jointPlot1D
 end # end Module

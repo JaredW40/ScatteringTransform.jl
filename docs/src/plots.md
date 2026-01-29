@@ -1,14 +1,16 @@
 # Plotting Scattering Transforms
 
+
+## 1D Plotting Functions
 ```@docs
 ScatteringTransform.plotZerothLayer1D
-ScatteringTransform.plotFirstLayer1D
-ScatteringTransform.gifFirstLayer
+ScatteringTransform.plotFirstLayer1DSubset
+ScatteringTransform.gifFirstLayer1D
 ScatteringTransform.plotFirstLayer1DAll
-ScatteringTransform.plotFirstLayer
-ScatteringTransform.plotSecondLayerSpecificPath
-ScatteringTransform.plotSecondLayer1DSubsetGif
-ScatteringTransform.plotSecondLayerFixAndVary
-ScatteringTransform.plotSecondLayer
-ScatteringTransform.jointPlot
+ScatteringTransform.plotFirstLayer1D
+ScatteringTransform.plotSecondLayer1DSpecificPath
+ScatteringTransform.gifSecondLayer1DSubset
+ScatteringTransform.plotSecondLayer1DFixAndVary
+ScatteringTransform.plotSecondLayer1D
+ScatteringTransform.jointPlot1D
 ```

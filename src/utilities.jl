@@ -241,3 +241,41 @@ function size(st::stFlux)
     es = originalSize(sz[1:ndims(l.weight[1])], l.bc)
     return es
 end
+
+
+"""
+    reshapeInputs(dataMat)
+
+Reshapes a data matrix from (N, numSamples) format to (N, 1, numSamples) format
+to be suitable as scatteringTransform input. Can be used for 1D signals. 
+
+# Arguments
+- `dataMat`: Matrix where rows are data points and columns are different samples
+
+# Returns
+- Reshaped array of size (N, 1, numSamples)
+- Tuple of dimensions for scatteringTransform
+
+# Example
+```julia
+N = 2047
+f = testfunction(N, "Doppler")
+g = testfunction(N, "Bumps")
+dataMat = hcat(f, g)
+signals, dims = reshapeInputs(dataMat)
+St = scatteringTransform(dims, 2, cw=Morlet(π), β=2, σ=abs)
+sOut = St(signals)
+"""
+function reshapeInputs(dataMat)
+    # Convert vector to column matrix if needed
+    if ndims(dataMat) == 1
+        dataMat = reshape(dataMat, :, 1)
+    end
+    
+    N = size(dataMat, 1)
+    numInputs = size(dataMat, 2)
+
+    reshapedData = reshape(dataMat, N, 1, numInputs)
+    dims = (N, 1, numInputs)
+    return reshapedData, dims
+end
