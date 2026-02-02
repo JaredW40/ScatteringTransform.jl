@@ -4,7 +4,7 @@
 ## 1D Plotting Functions
 ```@docs
 ScatteringTransform.plotZerothLayer1D
-ScatteringTransform.plotFirstLayer1DSubset
+ScatteringTransform.plotFirstLayer1DSingleWavelet
 ScatteringTransform.gifFirstLayer1D
 ScatteringTransform.plotFirstLayer1DAll
 ScatteringTransform.plotFirstLayer1D

@@ -246,14 +246,15 @@ end
 """
     reshapeInputs(dataMat)
 
-Reshapes a data matrix from (N, numSamples) format to (N, 1, numSamples) format
-to be suitable as scatteringTransform input. Can be used for 1D signals. 
+Reshapes a data matrix from (N, numSamples) format to (N, 1, numSamples) format. 
+Alos converts a data matrix from (N, M, numSamples) format to (N, M, numSamples) format. 
+Make signals suitable as scatteringTransform input. Can be used for 1D and 2D signals. 
 
 # Arguments
 - `dataMat`: Matrix where rows are data points and columns are different samples
 
 # Returns
-- Reshaped array of size (N, 1, numSamples)
+- Reshaped array of size (N, M, numSamples)
 - Tuple of dimensions for scatteringTransform
 
 # Example
@@ -272,10 +273,21 @@ function reshapeInputs(dataMat)
         dataMat = reshape(dataMat, :, 1)
     end
     
-    N = size(dataMat, 1)
-    numInputs = size(dataMat, 2)
+    if ndims(dataMat) == 2
+        N = size(dataMat, 1)
+        numInputs = size(dataMat, 2)
 
-    reshapedData = reshape(dataMat, N, 1, numInputs)
-    dims = (N, 1, numInputs)
+        reshapedData = reshape(dataMat, N, 1, numInputs)
+        dims = (N, 1, numInputs)
+    else ndims(dataMat) == 3
+        N = size(dataMat, 1)
+        M = size(dataMat, 2)
+        numInputs = size(dataMat, 3)
+
+        reshapedData = reshape(dataMat, N, M, numInputs)
+        dims = (N, M, numInputs)
+    else
+        error("Input data must be a vector, matrix, or 3D array.")
+    end
     return reshapedData, dims
 end

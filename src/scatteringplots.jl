@@ -3,7 +3,7 @@
 Function that plots the zeroth layer of the scattering transform at a specified example index. 
 """
 function plotZerothLayer1D(sf; saveTo=nothing, index=1)
-    plt = plot(sf[0][:, 1, index], title="Zeroth Layer", legend=false, xlim=(0, length(sf[0][:, 1, index])+1), color=:blue, margin=5Plots.mm)
+    plt = plot(sf[0][:, 1, index], title="Zeroth Layer", legend=false, xlim=(0, length(sf[0][:, 1, index])+1), color=:blue, margin=5Plots.mm, size=(720,480))
     if !isnothing(saveTo)
         savefig(plt, saveTo)
     end
@@ -11,12 +11,12 @@ function plotZerothLayer1D(sf; saveTo=nothing, index=1)
 end
 
 """
-    plotFirstLayer1D(j, origLoc, origSig; saveTo=nothing, index=1)
+    plotFirstLayer1DSingleWavelet(j, origLoc, origSig; saveTo=nothing, index=1)
 The variable `j` specifies which wavelet results to plot from the first layer, `index` specifies which example in the batch to plot, 
 `origLoc` is the `ScatteredOut` object containing the scattering transform results, and `origSig` is the original input signal. 
 It also includes heatmaps of the gradient wavelet in both the spatial and frequency domains. 
 """
-function plotFirstLayer1DSubset(j, origLoc, origSig; saveTo=nothing, index=1)
+function plotFirstLayer1DSingleWavelet(j, origLoc, origSig; saveTo=nothing, index=1)
     space = plot(origLoc[1][:, j, index], xlim=(0, length(origLoc[1][:, j, index])+1), legend=false, 
         color=:red, title="First Layer - Gradient Wavelet $j - Varying Location")
     org = plot(origSig[:,:,index], legend=false, color=:red, title="Original Signal", xlim=(0, length(origSig[:,:,index])+1))
@@ -25,7 +25,7 @@ function plotFirstLayer1DSubset(j, origLoc, origSig; saveTo=nothing, index=1)
     ∇̂h = heatmap(log.(abs.(rfft(origLoc[1][:, j, index], 1)) .^ 2)', xlabel="frequency", 
         yticks=false, ylabel="", title="Log-power Frequency Domain - Wavelet j=$j")
     l = Plots.@layout [a; b{0.1h}; [b c]]
-    plt = plot(space, org, ∇h, ∇̂h, layout=l, size=(1200, 800), margin=5Plots.mm)
+    plt = plot(space, org, ∇h, ∇̂h, layout=l, size=(1280, 720), margin=5Plots.mm)
     if !isnothing(saveTo)
         savefig(plt, saveTo)
     end
@@ -33,7 +33,7 @@ function plotFirstLayer1DSubset(j, origLoc, origSig; saveTo=nothing, index=1)
 end
 
 """
-    gifFirstLayer(origLoc, origSig; fps=2, saveTo=nothing, index=1)
+    gifFirstLayer1D(origLoc, origSig; fps=2, saveTo=nothing, index=1)
 Function to create a GIF visualizing all wavelets in the first layer across space for each example in the batch. 
 The variable `origLoc` is the `ScatteredOut` object containing the scattering transform results, `index` specifies which example in the batch to plot, 
 `origSig` is the original input signal, `saveTo` specifies the file path to save the GIF, and `fps` sets the frames per second for the GIF animation. 
@@ -42,7 +42,7 @@ If `saveTo` is provided, the GIF is saved to that file path. The default `fps` i
 function gifFirstLayer1D(origLoc, origSig; fps=2, saveTo=nothing, index=1)
     anim = Animation()
     for j = 1:size(origLoc[1])[end-1]
-        plotFirstLayer1DSubset(j, origLoc, origSig; index=index)
+        plotFirstLayer1DSingleWavelet(j, origLoc, origSig; index=index)
         frame(anim)
     end
     filepath = isnothing(saveTo) ? "tmp.gif" : saveTo
@@ -65,7 +65,7 @@ function plotFirstLayer1DAll(origLoc, origSig; saveTo=nothing, index=1, cline=:d
     ∇̂h = heatmap(log.(abs.(rfft(origLoc[1][:, 1:end, index], 1)) .^ 2)', xlabel="frequency",
         ylabel="wavelet index", title="Log-power Frequency Domain")
     l = Plots.@layout [a; b{0.1h}; [b c]]
-    plt = plot(space, org, ∇h, ∇̂h, layout=l, size=(1200, 800), margin=5Plots.mm)
+    plt = plot(space, org, ∇h, ∇̂h, layout=l, size=(1280, 720), margin=5Plots.mm)
     if !isnothing(saveTo)
         savefig(plt, saveTo)
     end
@@ -73,7 +73,7 @@ function plotFirstLayer1DAll(origLoc, origSig; saveTo=nothing, index=1, cline=:d
 end
 
 """
-    plotFirstLayer(stw, St; saveTo=nothing, index=1)
+    plotFirstLayer1D(stw, St; saveTo=nothing, index=1)
 Function that creates a heatmap of the first layer scattering transform results at a specified example index. 
 The variable `stw` is the scattered output, `St` is the scattering transform object, `saveTo` is the file 
 path to save the plot, and `index` specifies which example in the batch to plot.
@@ -82,7 +82,7 @@ function plotFirstLayer1D(stw, St; saveTo=nothing, index=1)
     f1, f2, f3 = getMeanFreq(St) # the mean frequencies for the wavelets in each layer. 
     plt = heatmap(1:size(stw[1], 1), f1[1:end-1], stw[1][:, :, index]', 
             xlabel="time index", ylabel="Frequency (Hz)", margin=5Plots.mm,
-            color=:viridis, title="First Layer", size=(1200, 800))
+            color=:viridis, title="First Layer", size=(1280, 720))
     if !isnothing(saveTo)
         savefig(plt, saveTo)
     end
@@ -150,7 +150,7 @@ function plotSecondLayer1DSpecificPath(stw, St, firstLayerWaveletIndex, secondLa
     normPlot = plot(title="Second Layer Signal norm (log-power) = $(round(secondLayerNorm, sigdigits=4))",
                     grid=false, showaxis=false, xticks=nothing, yticks=nothing, titlefontsize=11, framestyle=:none)
     l = Plots.@layout [a{0.4h}; title{0.05h}; c; d{0.05h}]
-    plt = plot(org, titlePlot, ∇h, normPlot, layout=l, margin=4Plots.mm, size=(900,600))
+    plt = plot(org, titlePlot, ∇h, normPlot, layout=l, margin=4Plots.mm, size=(1080,720))
     if !isnothing(saveTo)
         savefig(plt, saveTo)
     end
@@ -194,7 +194,7 @@ function plotSecondLayer1DFixAndVary(stw, St, firstLayerWavelets, secondLayerWav
             end
             toPlot = stw[2][:, jj, :, index]
             plt = heatmap(1:size(toPlot, 1), f1[1:end-1], toPlot', title="Second Layer Wavelet $jj, Frequency=$(round(f2[jj], sigdigits=4))Hz", 
-                    xlabel="time (samples)", ylabel="First Layer Frequency (Hz)", c=cgrad(:viridis, scale=:exp), margin=5Plots.mm, size=(900,600))
+                    xlabel="time (samples)", ylabel="First Layer Frequency (Hz)", c=cgrad(:viridis, scale=:exp), margin=5Plots.mm, size=(1080,720))
             frame(anim, plt)
         end
     else
@@ -205,7 +205,7 @@ function plotSecondLayer1DFixAndVary(stw, St, firstLayerWavelets, secondLayerWav
             end
             toPlot = stw[2][:, :, jj, index]
             plt = heatmap(1:size(toPlot, 1), f2[1:end-1], toPlot', title="First Layer Wavelet $jj, Frequency=$(round(f1[jj], sigdigits=4))Hz", 
-                    xlabel="time (samples)", ylabel="Second Layer Frequency (Hz)", c=cgrad(:viridis, scale=:exp), margin=5Plots.mm, size=(900,600))
+                    xlabel="time (samples)", ylabel="Second Layer Frequency (Hz)", c=cgrad(:viridis, scale=:exp), margin=5Plots.mm, size=(1080,720))
             frame(anim, plt)
         end
     end
@@ -214,7 +214,7 @@ function plotSecondLayer1DFixAndVary(stw, St, firstLayerWavelets, secondLayerWav
 end
 
 """
-    plotSecondLayer(stw, St; saveTo=nothing, index=1, title="Second Layer results", xVals=-1, yVals=-1, logPower=true, toHeat=nothing, c=cgrad(:viridis, [0,.9]), threshold=0, linePalette=:greys, minLog=NaN, kwargs...)
+    plotSecondLayer1D(stw, St; saveTo=nothing, index=1, title="Second Layer results", xVals=-1, yVals=-1, logPower=true, toHeat=nothing, c=cgrad(:viridis, [0,.9]), threshold=0, linePalette=:greys, minLog=NaN, kwargs...)
 TODO fix the similarity of these names.
 xVals and yVals give the spacing of the grid, as it doesn't seem to be done
 correctly by default. xVals gives the distance from the left and the right
@@ -300,10 +300,10 @@ function plotSecondLayer1D(stw, St; saveTo=nothing, title="Second Layer results"
 
     if title == ""
         plt = heatmap(toHeat; yticks=yTicksFreq, xticks=xTicksFreq, tick_direction=:out, rotation=labelRot,
-            xlabel=xlabel, ylabel=ylabel, left_margin=4Plots.mm, bottom_margin=3Plots.mm, c=c, clims=(bottom, top), size=(1080,720), kwargs...)
+            xlabel=xlabel, ylabel=ylabel, left_margin=5Plots.mm, bottom_margin=3Plots.mm, c=c, clims=(bottom, top), size=(1280,1080), kwargs...)
     else
         plt = heatmap(toHeat; yticks=yTicksFreq, xticks=xTicksFreq, tick_direction=:out, rotation=labelRot,
-            title=title, xlabel=xlabel, ylabel=ylabel, left_margin=4Plots.mm, bottom_margin=3Plots.mm, c=c, clims=(bottom, top), size=(1080,720), kwargs...)
+            title=title, xlabel=xlabel, ylabel=ylabel, left_margin=5Plots.mm, bottom_margin=3Plots.mm, c=c, clims=(bottom, top), size=(1280,1080), kwargs...)
     end
     nPlot = 2
     for i in 1:n, j in 1:m
