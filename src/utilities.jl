@@ -279,7 +279,7 @@ function reshapeInputs(dataMat)
 
         reshapedData = reshape(dataMat, N, 1, numInputs)
         dims = (N, 1, numInputs)
-    else ndims(dataMat) == 3
+    elseif ndims(dataMat) == 3
         N = size(dataMat, 1)
         M = size(dataMat, 2)
         numInputs = size(dataMat, 3)
