@@ -30,7 +30,11 @@ function Base.show(io::IO, st::stFlux{Dim,Dep}) where {Dim,Dep}
     layers = st.mainChain.layers
     σ = st.settings[:σ]
     Nd = ndims(st)
-    nFilters = [length(layers[i].weight) - 1 for i = 1:3:(3*Dep)]
+    if Nd == 1
+        nFilters = [length(layers[i].weight) - 1 for i = 1:3:(3*Dep)]
+    else # 2D case
+        nFilters = [size(layers[i].weight)[end] - 1 for i = 1:3:(3*Dep)]
+    end
     batchSize = getBatchSize(layers[1])
     print(io, "stFlux{Nd=$(Nd), m=$(Dep), filters=$(nFilters), σ = " *
               "$(σ), batchSize = $(batchSize), normalize = $(st.normalize)}")

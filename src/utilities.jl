@@ -235,9 +235,11 @@ function size(st::stFlux)
     l = st.mainChain[1]
     if typeof(l.fftPlan) <: Tuple
         sz = l.fftPlan[2].sz
+        es = originalSize(sz[1:ndims(l.weight[1])], l.bc)
     else
         sz = l.fftPlan.sz
+        es = originalSize(sz[1:ndims(l.weight) - 1], l.bc)
     end
-    es = originalSize(sz[1:ndims(l.weight[1])], l.bc)
+
     return es
 end
