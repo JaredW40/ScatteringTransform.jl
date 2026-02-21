@@ -101,7 +101,6 @@ function stFlux(inputSize::NTuple{N}, m=2; outputPool = 2, poolBy = 3//2,
     end
     poolBy = makeTuple(m, poolBy) # Defined in ~/shared.jl
     argsToEach = processArgs(m + 1, kwargs) # also in ~/shared.jl
-
     listOfSizes = [(inputSize..., ntuple(i -> 1, max(i - 1, 0))...) for i = 0:m]
     interstitial = Array{Any,1}(undef, 3 * (m + 1) - 2) 
     #= `interstitial` is an array of 3 functions per layer: 
@@ -111,7 +110,13 @@ function stFlux(inputSize::NTuple{N}, m=2; outputPool = 2, poolBy = 3//2,
         # first transform
         interstitial[3*i-2] = dispatchLayer(listOfSizes[i], Val(Nd); σ=identity,
             argsToEach[i]...)
-        nFilters = length(interstitial[3*i-2].weight)
+        #################### TO UPDATE ######################
+        if Nd == 1
+            nFilters = length(interstitial[3*i-2].weight)
+        else
+            nFilters = size(interstitial[3 * i - 2].weight)[end]
+        end
+        #################### TO UPDATE ######################
 
         pooledSize = poolSize(poolBy[i], listOfSizes[i][1:Nd]) # in ~/pool.jl
         #= then throw away the averaging (we'll pick it up in the actual transform)
@@ -145,7 +150,6 @@ function stFlux(inputSize::NTuple{N}, m=2; outputPool = 2, poolBy = 3//2,
     chacha = Chain(interstitial...) # Chain is from `Flux.jl` 
     outputSizes = ([(map(poolSize, outputPool[ii], x[1:Nd])..., x[(Nd+1):end]...) 
                     for (ii, x) in enumerate(listOfSizes)]...,)
-
     # record the settings used pretty kludgy
     settings = Dict(:outputPool => outputPool, :poolBy => poolBy, :σ => σ, 
         :flatten => flatten, (argsToEach...)...)
