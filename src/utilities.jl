@@ -246,7 +246,7 @@ end
 
 
 """
-    reshapeInputs(dataMat)
+    reshapeInputs(dataMat; is2DData=false) -> reshapedData, dims
 
 Reshapes a data matrix from (N, numSamples) format to (N, 1, numSamples) format. 
 Alos converts a data matrix from (N, M, numSamples) format to (N, M, numSamples) format. 
@@ -254,6 +254,7 @@ Make signals suitable as scatteringTransform input. Can be used for 1D and 2D si
 
 # Arguments
 - `dataMat`: Matrix where rows are data points and columns are different samples
+- `is2DData`: If `true`, treats the input as 2D data and reshapes accordingly. If `false`, treats the input as 1D data.
 
 # Returns
 - Reshaped array of size (N, M, numSamples)
@@ -269,23 +270,23 @@ signals, dims = reshapeInputs(dataMat)
 St = scatteringTransform(dims, 2, cw=Morlet(π), β=2, σ=abs)
 sOut = St(signals)
 """
-function reshapeInputs(dataMat)
+function reshapeInputs(dataMat; is2DData=false)
     # Convert vector to column matrix if needed
     if ndims(dataMat) == 1
         dataMat = reshape(dataMat, :, 1)
     end
     
     if ndims(dataMat) == 2
-        N = size(dataMat, 1)
-        numInputs = size(dataMat, 2)
-
-        reshapedData = reshape(dataMat, N, 1, numInputs)
-        dims = (N, 1, numInputs)
+        N, M = size(dataMat)
+        if is2DImage
+            reshapedData = reshape(dataMat, N, M, 1)
+            dims = (N, M, 1)
+        else
+            reshapedData = reshape(dataMat, N, 1, M)
+            dims = (N, 1, M)
+        end
     elseif ndims(dataMat) == 3
-        N = size(dataMat, 1)
-        M = size(dataMat, 2)
-        numInputs = size(dataMat, 3)
-
+        N, M, numInputs = size(dataMat)
         reshapedData = reshape(dataMat, N, M, numInputs)
         dims = (N, M, numInputs)
     else
