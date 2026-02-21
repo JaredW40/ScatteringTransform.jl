@@ -15,6 +15,8 @@ concurrency:
 env:
   JULIA_PKG_SERVER: ""
   # Fix for Windows: Forces GR/Plots to be headless
+  JULIA_NUM_THREADS: 1
+  JULIA_PKG_PRECOMPILE_AUTO: 0
   GKSwstype: "100"
   # Fix for macOS: Forces Matplotlib to use non-interactive backend
   MPLBACKEND: "Agg"

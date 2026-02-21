@@ -240,7 +240,7 @@ function size(st::stFlux)
         sz = l.fftPlan.sz
         es = originalSize(sz[1:ndims(l.weight) - 1], l.bc)
     end
-
+    
     return es
 end
 
@@ -278,17 +278,17 @@ function reshapeInputs(dataMat; is2DData=false)
     
     if ndims(dataMat) == 2
         N, M = size(dataMat)
-        if is2DImage
-            reshapedData = reshape(dataMat, N, M, 1)
-            dims = (N, M, 1)
+        if is2DData
+            reshapedData = reshape(dataMat, N, M, 1, 1)
+            dims = (N, M, 1, 1)
         else
             reshapedData = reshape(dataMat, N, 1, M)
             dims = (N, 1, M)
         end
     elseif ndims(dataMat) == 3
         N, M, numInputs = size(dataMat)
-        reshapedData = reshape(dataMat, N, M, numInputs)
-        dims = (N, M, numInputs)
+        reshapedData = reshape(dataMat, N, M, 1, numInputs)
+        dims = (N, M, 1, numInputs)
     else
         error("Input data must be a vector, matrix, or 3D array.")
     end

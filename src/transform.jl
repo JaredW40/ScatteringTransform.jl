@@ -172,7 +172,8 @@ Networks (MWSNs) of Chak and Saito. The following function is defined in our
 package `MonogenicFilterFlux.jl`.
 =#
     #shearingLayer(listOfSizes; varargs...)
-    MonogenicLayer(listOfSizes; varargs...)
+    #MonogenicLayer(listOfSizes; varargs...)
+    MonogenicLayer(listOfSizes)
 end
 
 Base.size(a::Tuple{AbstractFFTs.Plan,AbstractFFTs.Plan}) = size(a[1])
