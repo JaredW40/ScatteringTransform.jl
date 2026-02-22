@@ -458,3 +458,209 @@ function jointPlot1D(thingToPlot, thingName, cSymbol, St, origSig; saveTo=nothin
     end
     return plt
 end
+
+
+
+"""
+    plotZerothLayer2D(sf; color=:grays, saveTo=nothing, index=1)
+Function that plots the zeroth layer of the scattering transform at a specified example index. 
+"""
+function plotZerothLayer2D(sf; color=:grays, saveTo=nothing, index=1)
+    plt = heatmap(sf[0][:,:,1,index], title="Zeroth Layer", legend=false, axis=false, color=color, margin=5Plots.mm, size=(720,480))
+    if !isnothing(saveTo)
+        savefig(plt, saveTo)
+    end
+    return plt
+end
+
+"""
+    plotFirstLayer2DSingleWavelet(j, sf, origSig; color=:grays, saveTo=nothing, index=1)
+The variable `j` specifies which wavelet results to plot from the first layer, `index` specifies which example in the batch to plot, 
+`sf` is the `ScatteredOut` object containing the scattering transform results, and `origSig` is the original input signal. 
+"""
+function plotFirstLayer2DSingleWavelet(j, sf, origSig; color=:grays, saveTo=nothing, index=1)
+    space = heatmap(sf[1][:,:,j,index], title="First Layer - Gradient Wavelet $j", legend=false, axis=false, color=color)
+    orig = heatmap(origSig[:,:,1,index], title="Original Signal", legend=false, axis=false, color=color)
+    l = Plots.@layout [a b]
+    plt = plot(space, orig, layout=l, size=(1280, 720), margin=5Plots.mm)
+    if !isnothing(saveTo)
+        savefig(plt, saveTo)
+    end
+    return plt
+end
+
+"""
+    gifFirstLayer2D(sf, origSig; color=:grays, fps=2, saveTo=nothing, index=1)
+Function to create a GIF visualizing all wavelets in the first layer across space for each example in the batch. 
+The variable `sf` is the `ScatteredOut` object containing the scattering transform results, `index` specifies which example in the batch to plot, 
+`origSig` is the original input signal, `saveTo` specifies the file path to save the GIF, and `fps` sets the frames per second for the GIF animation. 
+If `saveTo` is provided, the GIF is saved to that file path. The default `fps` is set to 2 frames per second. 
+"""
+function gifFirstLayer2D(sf, origSig; color=:grays, fps=2, saveTo=nothing, index=1)
+    anim = Animation()
+    for j = 1:size(sf[1])[end-1]
+        plt = plotFirstLayer2DSingleWavelet(j, sf, origSig; color=color, index=index)
+        frame(anim, plt)
+    end
+    filepath = isnothing(saveTo) ? "tmp.gif" : saveTo
+    return gif(anim, filepath, fps=fps)
+end
+
+"""
+        visualizeFirstLayer2D(sf; color=:grays, index=1) 
+Function that creates a grid of heatmaps visualizing all the first layer gradient wavelets across space for a specified example index. 
+The variable `sf` is the `ScatteredOut` object containing the scattering transform results, `index` specifies which example in the batch to plot, and 
+`color` sets the color gradient for the heatmaps. The function organizes the heatmaps in a grid format, where each row corresponds to a different 
+scale of the wavelets, and each column corresponds to a different channel (e.g., real and imaginary parts).
+"""
+function visualizeFirstLayer2D(sf; color=:grays, index=1, clims=nothing, colorScaling=false)
+    nchannel = 3
+    scale = Int(size(sf[1], 3) / nchannel)
+
+    clims = isnothing(clims) ? (minimum(sf[1][:,:,:,index]), maximum(sf[1][:,:,:,index])) : clims
+
+    plots = []
+    for scal = 1:scale
+        o1 = sf[1][:,:,1 + 3*(scal-1), index]
+        o2 = sf[1][:,:,2 + 3*(scal-1), index]
+        o3 = sf[1][:,:,3 + 3*(scal-1), index]
+        if colorScaling
+            if scal == 1
+                push!(plots, heatmap(o1, color=color, colorbar=false, axis=false, legend=false, ylabel=string(scal), title="1", clims=clims))
+                push!(plots, heatmap(o2, color=color, colorbar=false, axis=false, legend=false, title="i", clims=clims))
+                push!(plots, heatmap(o3, color=color, colorbar=false, axis=false, legend=false, title="j", clims=clims))
+            else
+                push!(plots, heatmap(o1, color=color, colorbar=false, axis=false, legend=false, ylabel=string(scal), clims=clims))
+                push!(plots, heatmap(o2, color=color, colorbar=false, axis=false, legend=false, clims=clims))
+                push!(plots, heatmap(o3, color=color, colorbar=false, axis=false, legend=false, clims=clims))
+            end
+        else
+            if scal == 1
+                push!(plots, heatmap(o1, color=color, colorbar=false, axis=false, legend=false, ylabel=string(scal), title="1"))
+                push!(plots, heatmap(o2, color=color, colorbar=false, axis=false, legend=false, title="i"))
+                push!(plots, heatmap(o3, color=color, colorbar=false, axis=false, legend=false, title="j"))
+            else
+                push!(plots, heatmap(o1, color=color, colorbar=false, axis=false, legend=false, ylabel=string(scal)))
+                push!(plots, heatmap(o2, color=color, colorbar=false, axis=false, legend=false))
+                push!(plots, heatmap(o3, color=color, colorbar=false, axis=false, legend=false))
+            end
+        end
+    end
+    return plot(plots..., layout=(scale, nchannel), size=(540, 1080))
+end
+
+"""
+    plotFirstLayer2DAll(sf, origSig; saveTo=nothing, index=1, color=:grays)
+Function that plots all first layer gradient wavelets for a specific example signal `index` across space, along with the original signal. 
+The variable `index` specifies which example in the batch to plot, `sf` is the `ScatteredOut` object 
+containing the scattering transform results, `origSig` is the original input signal, and `saveTo` is the file path to save the plot.
+"""
+function plotFirstLayer2DAll(sf, origSig; saveTo=nothing, index=1, color=:grays, colorScaling=false)
+    global_min = min(minimum(sf[1][:,:,:,index]), minimum(origSig[:,:,1,index]))
+    global_max = max(maximum(sf[1][:,:,:,index]), maximum(origSig[:,:,1,index]))
+    clims = (global_min, global_max)
+    
+    avg_signal = 0
+    for i in 1:size(sf[1], 3)
+        avg_signal = avg_signal .+ sf[1][:, :, i, index]
+    end
+    avg_signal = avg_signal / size(sf[1], 3)
+    if colorScaling
+        avg_plot = heatmap(avg_signal, legend=false, axis=false, color=color, colorbar=false, title="Average of First Layer Wavelets", clims=clims)
+        space = visualizeFirstLayer2D(sf; color=color, index=index, clims=clims, colorScaling=false)
+        orig = heatmap(origSig[:,:,1,index], title="Original Signal", legend=false, axis=false, color=color, colorbar=false, clims=clims)
+    else
+        avg_plot = heatmap(avg_signal, legend=false, axis=false, color=color, colorbar=false, title="Average of First Layer Wavelets")
+        space = visualizeFirstLayer2D(sf; color=color, index=index)
+        orig = heatmap(origSig[:,:,1,index], title="Original Signal", legend=false, axis=false, color=color, colorbar=false)
+    end
+
+    l = Plots.@layout [a [b; c]]
+    plt = plot(space, avg_plot, orig, layout=l, size=(1280, 960), margin=5Plots.mm)
+    if !isnothing(saveTo)
+        savefig(plt, saveTo)
+    end
+    return plt
+end
+
+"""
+    plotFirstLayer2D(sf; color=:grays, saveTo=nothing, index=1)
+Function that creates a heatmap of the first layer scattering transform results at a specified example index. 
+The variable `sf` is the scattered output, `saveTo` is the file path to save the plot, and `index` specifies which example in the batch to plot.
+The user can also specify the color gradient for the heatmap using the `color` argument. 
+"""
+function plotFirstLayer2D(sf; color=:grays, saveTo=nothing, index=1)
+    nchannel = 3
+    scale = Int(size(sf[1], 3) / nchannel)
+    clims = (minimum(sf[1][:,:,:,index]), maximum(sf[1][:,:,:,index]))
+
+    plots = []
+    for scal = 1:scale
+        o1 = sf[1][:,:,1 + 3*(scal-1), index]
+        o2 = sf[1][:,:,2 + 3*(scal-1), index]
+        o3 = sf[1][:,:,3 + 3*(scal-1), index]
+        if scal == 1
+            push!(plots, heatmap(o1, color=color, colorbar=false, axis=false, legend=false, ylabel=string(scal), title="1", clims=clims))
+            push!(plots, heatmap(o2, color=color, colorbar=false, axis=false, legend=false, title="i", clims=clims))
+            push!(plots, heatmap(o3, color=color, colorbar=false, axis=false, legend=false, title="j", clims=clims))
+        else
+            push!(plots, heatmap(o1, color=color, colorbar=false, axis=false, legend=false, ylabel=string(scal), clims=clims))
+            push!(plots, heatmap(o2, color=color, colorbar=false, axis=false, legend=false, clims=clims))
+            push!(plots, heatmap(o3, color=color, colorbar=false, axis=false, legend=false, clims=clims))
+        end
+    end
+    plt = plot(plots..., layout=(scale, nchannel), plot_title="First Layer", size=(1080, 960), margin=5Plots.mm)
+
+    if !isnothing(saveTo)
+        savefig(plt, saveTo)
+    end
+    return plt
+end
+
+
+"""
+    visualizeSecondLayer2D(sf; color=:grays, index=1)
+Function that creates a grid of heatmaps visualizing all the second layer gradient wavelets across space for a specified example index. 
+The variable `sf` is the `ScatteredOut` object containing the scattering transform results, `index` specifies which example in the batch to plot, and `color` sets the color gradient for the heatmaps. 
+The function organizes the heatmaps in a grid format, where each row corresponds to a different scale of the second layer wavelets, and each column corresponds to a different channel (e.g., real and imaginary parts). 
+"""
+function visualizeSecondLayer2D(sf; color=:grays, index=1, clims=nothing)
+    nchannel = 3
+    n_layer1 = size(sf[2], 4)
+    n_layer2 = size(sf[2], 3)
+    scale_layer1 = Int(n_layer1 / nchannel)
+    scale_layer2 = Int(n_layer2 / nchannel)
+
+    clims = isnothing(clims) ? (minimum(sf[2][:,:,:,:,index]), maximum(sf[2][:,:,:,:,index])) : clims
+    plots = []
+
+    col_titles = ["(1,:)", "(i,:)", "(j,:)"]
+    row_titles = ["(:,1)", "(:,i)", "(:,j)"]
+
+    for scal2 = 1:scale_layer2
+        for k = 1:nchannel
+            for scal1 = 1:scale_layer1
+                for j = 1:nchannel
+                    o = sf[2][:, :, k + nchannel*(scal2-1), j + nchannel*(scal1-1), index]
+
+                    is_top_row    = (scal2 == 1) && (k == 1)
+                    is_left_col   = (scal1 == 1) && (j == 1)
+                    is_right_col  = (scal1 == scale_layer1) && (j == nchannel)
+                    is_bottom_row = (scal2 == scale_layer2) && (k == nchannel)
+
+                    title_str  = is_top_row                     ? col_titles[j]  : ""
+                    ylabel_str = (is_left_col && !is_right_col) ? string(scal2)  : 
+                                 is_right_col                   ? row_titles[k]  : ""
+                    xlabel_str = is_bottom_row                  ? string(scal1)  : ""
+
+                    push!(plots, heatmap(o, color=color, axis=false, legend=false,
+                                         title=title_str, ylabel=ylabel_str,xlabel=xlabel_str, clims=clims))
+                end
+            end
+        end
+    end
+
+    total_rows = n_layer2
+    total_cols = n_layer1
+    return plot(plots..., layout=(total_rows, total_cols), size=(1000, 1000))
+end

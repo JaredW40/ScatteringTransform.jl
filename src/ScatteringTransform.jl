@@ -47,4 +47,5 @@ export roll, wrap, flatten, reshapeInputs
 include("adjoints.jl")
 include("scatteringplots.jl")
 export plotZerothLayer1D, plotFirstLayer1DSingleWavelet, gifFirstLayer1D, plotFirstLayer1DAll, plotFirstLayer1D, plotSecondLayer1DOld, plotSecondLayer1DSpecificPath, gifSecondLayer1DSubset, plotSecondLayer1DFixAndVary, plotSecondLayer1D, jointPlot1D
+export plotZerothLayer2D, plotFirstLayer2DSingleWavelet, gifFirstLayer2D, visualizeFirstLayer2D, plotFirstLayer2DAll, plotFirstLayer2D, visualizeSecondLayer2D
 end # end Module
