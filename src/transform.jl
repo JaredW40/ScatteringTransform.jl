@@ -172,8 +172,7 @@ Networks (MWSNs) of Chak and Saito. The following function is defined in our
 package `MonogenicFilterFlux.jl`.
 =#
     #shearingLayer(listOfSizes; varargs...)
-    #MonogenicLayer(listOfSizes; varargs...)
-    MonogenicLayer(listOfSizes)
+    MonogenicLayer(listOfSizes; varargs...)
 end
 
 Base.size(a::Tuple{AbstractFFTs.Plan,AbstractFFTs.Plan}) = size(a[1])
@@ -279,8 +278,7 @@ function applyScattering(c::Tuple, x, Nd, st, M)
             return (tmpRes, apld...)
         else
             tmpRes = r(real.(tmpRes))
-            return (tmpRes,
-                applyScattering(tail(c), res, Nd, st, M + 1)...)
+            return (tmpRes, applyScattering(tail(c), res, Nd, st, M + 1)...)
         end
     else
         # this is either a reshaping layer or a subsampling layer, so no output

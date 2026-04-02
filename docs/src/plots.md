@@ -14,3 +14,16 @@ ScatteringTransform.plotSecondLayer1DFixAndVary
 ScatteringTransform.plotSecondLayer1D
 ScatteringTransform.jointPlot1D
 ```
+
+## 2D Plotting Functions
+```@docs
+ScatteringTransform.plotOriginalSignal2D
+ScatteringTransform.plotZerothLayer2D
+ScatteringTransform.plotFirstLayer2DSingleWavelet
+ScatteringTransform.visualizeFirstLayer2D
+ScatteringTransform.plotFirstLayer2D
+ScatteringTransform.plotFirstLayer2DAll
+ScatteringTransform.plotSecondLayer2DSingleWavelet
+ScatteringTransform.visualizeSecondLayer2D
+ScatteringTransform.plotSecondLayer2D
+```
