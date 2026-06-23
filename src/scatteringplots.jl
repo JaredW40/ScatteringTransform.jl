@@ -14,8 +14,8 @@ end
     plotZerothLayer1D(sf; saveTo=nothing, index=1)
 Function that plots the zeroth layer of the scattering transform at a specified example index. 
 """
-function plotZerothLayer1D(sf; saveTo=nothing, index=1)
-    plt = plot(sf[0][:, 1, index], title="Zeroth Layer", legend=false, xlim=(0, length(sf[0][:, 1, index])+1), color=:blue, margin=5Plots.mm, size=(720,480))
+function plotOriginalSignal1D(f; title="Original Signal", saveTo=nothing, index=1)
+    plt = plot(f[:,1,index], title=title, legend=false, xlim=(0, length(f[:, 1, index])+1), color=:blue, margin=5Plots.mm, size=(720,480))
     if !isnothing(saveTo)
         savefig(plt, saveTo)
     end
@@ -23,14 +23,26 @@ function plotZerothLayer1D(sf; saveTo=nothing, index=1)
 end
 
 """
-    plotFirstLayer1DSingleWavelet(j, origLoc, origSig; saveTo=nothing, index=1)
+    plotZerothLayer1D(sf; title="Zeroth Layer", saveTo=nothing, index=1)
+Function that plots the zeroth layer of the scattering transform at a specified example index. 
+"""
+function plotZerothLayer1D(sf; title="Zeroth Layer", saveTo=nothing, index=1)
+    plt = plot(sf[0][:, 1, index], title=title, legend=false, xlim=(0, length(sf[0][:, 1, index])+1), color=:blue, margin=5Plots.mm, size=(720,480))
+    if !isnothing(saveTo)
+        savefig(plt, saveTo)
+    end
+    return plt
+end
+
+"""
+    plotFirstLayer1DSingleWavelet(j, origLoc, origSig; title="First Layer", saveTo=nothing, index=1)
 The variable `j` specifies which wavelet results to plot from the first layer, `index` specifies which example in the batch to plot, 
 `origLoc` is the `ScatteredOut` object containing the scattering transform results, and `origSig` is the original input signal. 
 It also includes heatmaps of the gradient wavelet in both the spatial and frequency domains. 
 """
-function plotFirstLayer1DSingleWavelet(j, origLoc, origSig; saveTo=nothing, index=1)
+function plotFirstLayer1DSingleWavelet(j, origLoc, origSig; title="First Layer", saveTo=nothing, index=1)
     space = plot(origLoc[1][:, j, index], xlim=(0, length(origLoc[1][:, j, index])+1), legend=false, 
-        color=:red, title="First Layer - Gradient Wavelet $j - Varying Location")
+        color=:red, title="$title - Gradient Wavelet $j - Varying Location")
     org = plot(origSig[:,:,index], legend=false, color=:red, title="Original Signal", xlim=(0, length(origSig[:,:,index])+1))
     ∇h = heatmap(origLoc[1][:, j, index]', xlabel="space", 
         yticks=false, ylabel="", title="First Layer gradient - Wavelet j=$j")
@@ -45,13 +57,13 @@ function plotFirstLayer1DSingleWavelet(j, origLoc, origSig; saveTo=nothing, inde
 end
 
 """
-    gifFirstLayer1D(origLoc, origSig; fps=2, saveTo=nothing, index=1)
+    gifFirstLayer1D(origLoc, origSig; fps=2, title="First Layer", saveTo=nothing, index=1)
 Function to create a GIF visualizing all wavelets in the first layer across space for each example in the batch. 
 The variable `origLoc` is the `ScatteredOut` object containing the scattering transform results, `index` specifies which example in the batch to plot, 
 `origSig` is the original input signal, `saveTo` specifies the file path to save the GIF, and `fps` sets the frames per second for the GIF animation. 
 If `saveTo` is provided, the GIF is saved to that file path. The default `fps` is set to 2 frames per second. 
 """
-function gifFirstLayer1D(origLoc, origSig; fps=2, saveTo=nothing, index=1)
+function gifFirstLayer1D(origLoc, origSig; fps=2, title="First Layer", saveTo=nothing, index=1)
     anim = Animation()
     for j = 1:size(origLoc[1])[end-1]
         plotFirstLayer1DSingleWavelet(j, origLoc, origSig; index=index)
@@ -62,15 +74,15 @@ function gifFirstLayer1D(origLoc, origSig; fps=2, saveTo=nothing, index=1)
 end
 
 """
-    plotFirstLayer1DAll(origLoc, origSig; saveTo=nothing, index=1, cline=:darkrainbow)
+    plotFirstLayer1DAll(origLoc, origSig; title="First Layer", saveTo=nothing, index=1, cline=:darkrainbow)
 Function that plots all first layer gradient wavelets for a specific example signal `index` across space, along with the original signal. 
 It also includes heatmaps of the gradient wavelets in both the spatial and frequency domains. 
 The variable `index` specifies which example in the batch to plot, `origLoc` is the `ScatteredOut` object 
 containing the scattering transform results, `origSig` is the original input signal, and `saveTo` is the file path to save the plot.
 """
-function plotFirstLayer1DAll(origLoc, origSig; saveTo=nothing, index=1, cline=:darkrainbow)
+function plotFirstLayer1DAll(origLoc, origSig; title="First Layer", saveTo=nothing, index=1, cline=:darkrainbow)
     space = plot(origLoc[1][:, :, index], line_z=(1:size(origLoc[1], 2))', xlim=(0, length(origLoc[1][:, 1, index])+1), 
-        legend=false, colorbar=true, color=cline, title="First Layer Gradient Wavelets")
+        legend=false, colorbar=true, color=cline, title="$title Gradient Wavelets")
     org = plot(origSig[:,:,index], legend=false, color=:red, title="Original Signal", xlim=(0, length(origSig[:,:,index])+1))
     ∇h = heatmap(origLoc[1][:, 1:end, index]', xlabel="space",
         ylabel="wavelet index", title="First Layer gradients")
@@ -85,16 +97,16 @@ function plotFirstLayer1DAll(origLoc, origSig; saveTo=nothing, index=1, cline=:d
 end
 
 """
-    plotFirstLayer1D(stw, St; saveTo=nothing, index=1)
+    plotFirstLayer1D(stw, St; title="First Layer", saveTo=nothing, index=1)
 Function that creates a heatmap of the first layer scattering transform results at a specified example index. 
 The variable `stw` is the scattered output, `St` is the scattering transform object, `saveTo` is the file 
 path to save the plot, and `index` specifies which example in the batch to plot.
 """
-function plotFirstLayer1D(stw, St; saveTo=nothing, index=1)
+function plotFirstLayer1D(stw, St; title="First Layer", saveTo=nothing, index=1)
     f1, f2, f3 = getMeanFreq(St) # the mean frequencies for the wavelets in each layer. 
     plt = heatmap(1:size(stw[1], 1), f1[1:end-1], stw[1][:, :, index]', 
             xlabel="time index", ylabel="Frequency (Hz)", margin=5Plots.mm,
-            color=:viridis, title="First Layer", size=(1280, 720))
+            color=:viridis, title="$title", size=(1280, 720))
     if !isnothing(saveTo)
         savefig(plt, saveTo)
     end
@@ -149,10 +161,10 @@ function plotSecondLayer1DSpecificPath(stw, St, firstLayerWaveletIndex, secondLa
     
     # Plot the signal for a specific path. 
     signalLayer1Freq = f1[firstLayerWaveletIndex]; signalLayer2Freq = f2[secondLayerWaveletIndex]
-    titlePlot = plot(title="Path: First Layer - wavelet $firstLayerWaveletIndex, Second Layer - wavelet $secondLayerWaveletIndex\n" *
-                            "First Layer Freq = $(round(signalLayer1Freq, sigdigits=3)) Hz | " * 
-                            "Second Layer Freq = $(round(signalLayer2Freq, sigdigits=3)) Hz",
-                     grid=false, showaxis=false, xticks=nothing, yticks=nothing, bottom_margin=-5Plots.px, titlefontsize=11)
+    plotsTitle = "Path: First Layer - wavelet $firstLayerWaveletIndex, Second Layer - wavelet $secondLayerWaveletIndex\n" *
+                "First Layer Freq = $(round(signalLayer1Freq, sigdigits=3)) Hz | " * 
+                "Second Layer Freq = $(round(signalLayer2Freq, sigdigits=3)) Hz"
+    titlePlot = plot(title=plotsTitle, grid=false, showaxis=false, xticks=nothing, yticks=nothing, bottom_margin=-5Plots.px, titlefontsize=11)
     
     path_spatial = stw[2][:, secondLayerWaveletIndex, firstLayerWaveletIndex, index]
     ∇h = plot(path_spatial, xlabel="time (samples)", ylabel="amplitude", title="Second Layer Plot", legend=false, linewidth=1.5, frame=:box, fill=0, fillalpha=0.5, 
@@ -179,7 +191,7 @@ parameter specifies which example in the batch to plot. It defaults to the first
 function gifSecondLayer1DSubset(stw, St, firstLayerWavelets, secondLayerWavelets, original; fps=2, saveTo=nothing, index=1)
     anim = Animation()
     for j in firstLayerWavelets, k in secondLayerWavelets
-        plt = plotSecondLayer1DSpecificPath(stw, St, j, k, original; index=index)
+        plt = plotSecondLayer1DSpecificPath(stw, St, j, k, original; saveTo=nothing, index=index)
         frame(anim, plt)
     end
     filepath = isnothing(saveTo) ? "tmp.gif" : saveTo
@@ -235,7 +247,7 @@ also as a tuple. Default values are `xVals = (.037, .852), yVals = (.056, .939)`
 If you have no colorbar, set `xVals = (.0015, .997), yVals = (.002, .992)`
 In the case that arbitrary space has been introduced, if you have a title, use `xVals = (.037, .852), yVals = (.056, .939)`, or if you have no title, use `xVals = (.0105, .882), yVals = (.056, .939)`
 """
-function plotSecondLayer1D(stw::ScatteredOut, St; saveTo=nothing, index=1, kwargs...)
+function plotSecondLayer1D(stw::ScatteredOut, St; saveTo=nothing, index=1, title="Second Layer results", xVals=-1, yVals=-1, logPower=true, toHeat=nothing, c=cgrad(:viridis, [0,.9]), threshold=0, linePalette=:greys, minLog=NaN, kwargs...)
     secondLayerRes = stw[2]
     if ndims(secondLayerRes) > 3
         return plotSecondLayer1D(secondLayerRes[:, :, :, index], St; saveTo=saveTo, kwargs...)
@@ -478,7 +490,11 @@ end
 Function that plots the original signal `origSig` and saves it to a desired location.  
 """
 function plotOriginalSignal2D(origSig; color=:grays, saveTo=nothing, index=1)
+<<<<<<< HEAD
     plt = heatmap(origSig[:,:,1,index], title="Original Signal", legend=false, axis=false, color=color, colorbar=false, margin=5Plots.mm, size=(720,720))
+=======
+    plt = heatmap(origSig[:,:,1,index], title="Original Signal", legend=false, axis=false, color=color, colorbar=false, margin=5Plots.mm, size=(720,480))
+>>>>>>> 3b17b96 (Added GPU support and tests.)
     if !isnothing(saveTo)
         savefig(plt, saveTo)
     end

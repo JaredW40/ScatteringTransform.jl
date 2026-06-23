@@ -123,9 +123,7 @@ function stFlux(inputSize::NTuple{N}, m=2; outputPool = 2, poolBy = 3//2,
         also, in the first layer, merge the channels into the first shearing,
         since max pool isn't defined for arbitrary arrays =#
         if i == 1
-            listOfSizes[i+1] = (pooledSize...,
-                (nFilters - 1) * listOfSizes[1][Nd+1],
-                listOfSizes[i][Nd+2:end]...)
+            listOfSizes[i+1] = (pooledSize..., (nFilters - 1) * listOfSizes[1][Nd+1], listOfSizes[i][Nd+2:end]...)
             interstitial[3*i-1] = x -> begin
                 ax = axes(x)
                 return σ.(reshape(x[ax[1:Nd]..., ax[Nd+1][1:end-1], ax[(Nd+2):end]...],
@@ -155,6 +153,14 @@ function stFlux(inputSize::NTuple{N}, m=2; outputPool = 2, poolBy = 3//2,
         :flatten => flatten, (argsToEach...)...)
     return stFlux{Nd,m,typeof(chacha),typeof(outputSizes),typeof(outputPool),typeof(settings)}(chacha, normalize,
         outputSizes, outputPool, settings)
+end
+
+function stFlux(mainChain::C, normalize::Bool, outputSizes::D, 
+                outputPool::E, settings::F) where {C,D,E,F}
+    # Extract Dimension and Depth from the settings or infer from chain
+    Nd = settings[:outputPool] |> first |> length  # spatial dims
+    m  = length(outputSizes) - 1                   # depth
+    stFlux{Nd, m, C, D, E, F}(mainChain, normalize, outputSizes, outputPool, settings)
 end
 
 function dispatchLayer(listOfSizes, Nd::Val{1}; varargs...)
@@ -223,8 +229,8 @@ function extractAddPadding(x, adr, chunkSize, N)
     justUsing = x[fill(Colon(), N)..., :, adr]
     if length(adr) < chunkSize
         actualSize = chunkSize - length(adr)
-        return cat(justUsing, zeros(eltype(justUsing), size(x)[1:end-1]...,
-                actualSize), dims=ndims(justUsing)), length(adr)
+        return cat(justUsing, fill!(similar(justUsing, size(x)[1:end-1]..., 
+                    actualSize), 0), dims=ndims(justUsing)), length(adr)
     else
         return justUsing, chunkSize
     end
@@ -233,7 +239,12 @@ end
 trim(x, actualSize) = x[axes(x)[1:end-1]..., 1:actualSize]
 function breakAndAdapt(St::stFlux{N,D}, x) where {N,D}
     mc = St.mainChain.layers
-    chunkSize = size(mc[1].fftPlan)[end]
+    cpu_chunk = size(mc[1].fftPlan)[end]
+    chunkSize = if x isa CuArray
+        min(size(x)[end], cpu_chunk * 32)  # up to 32x larger chunks on GPU
+    else
+        cpu_chunk
+    end
     nSteps = ceil(Int, (size(x)[end]) / chunkSize) # the first entry is taken care of already
     containerType = typeof(St.mainChain[1].weight[1])
     xAxes = axes(x)
@@ -242,7 +253,8 @@ function breakAndAdapt(St::stFlux{N,D}, x) where {N,D}
     # do the first beforehand to get the sizes
     out = applyScattering(mc, maybeAdapt(containerType, firstEx), ndims(St), St, 0)
     # create storage
-    outputs = map(out -> zeros(eltype(out), size(out)[1:end-1]..., size(x)[end]...), out)
+    # outputs = map(o -> maybeAdapt(typeof(o), zeros(eltype(o), size(o)[1:end-1]..., size(x)[end]...)), out)
+    outputs = map(o -> maybeAdapt(typeof(o), fill!(similar(o, size(o)[1:end-1]..., size(x)[end]), zero(eltype(o)))), out)
     # util to write out to outputs at location batchInds
     function writeOut!(out, batchInds, actualSize)
         for jj in 1:length(out)
@@ -262,7 +274,6 @@ function breakAndAdapt(St::stFlux{N,D}, x) where {N,D}
     end
     return outputs
 end
-
 
 function applyScattering(c::Tuple, x, Nd, st, M)
     res = first(c)(x)
@@ -286,6 +297,7 @@ function applyScattering(c::Tuple, x, Nd, st, M)
     end
 end
 
+
 applyScattering(::Tuple{}, x, Nd, st, M) = tuple() # all of the returns should
 # happen along the way, not at the end
 
@@ -296,23 +308,15 @@ normalize `x` over the dimensions `Nd` through `ndims(x)-1`. For example, if `Nd
 function normalize(x, Nd)
     n = ndims(x)
     totalThisLayer = prod(size(x)[(Nd+1):(n-1)])
-    ax = axes(x)
-    buf = Zygote.Buffer(x)
-    for i = 1:size(x)[end]
-        xSlice = x[ax[1:(n-1)]..., i]
-        thisExample = totalThisLayer / (sum(abs.(xSlice) .^ 2)) .^ (0.5f0)
-        if isnan(thisExample) || thisExample ≈ Inf
-            buf[ax[1:(n-1)]..., i] = xSlice
-        else
-            buf[ax[1:(n-1)]..., i] = xSlice .* thisExample
-        end
-    end
-    return copy(buf)
+    sumSqDims = 1:(n-1)
+    normSq = sum(abs.(x) .^ 2, dims=sumSqDims)
+    scale = totalThisLayer ./ sqrt.(normSq)
+    scale = ifelse.(isnan.(scale) .| isinf.(scale), one(eltype(scale)), scale)
+    return x .* scale
 end
 
 normalize(sct::ScatteredOut, Nd) = ScatteredOut(map(x -> normalize(x, Nd),
         sct.output), sct.k)
 
 normalize(sct::ScatteredFull, Nd) = ScatteredFull(sct.m, sct.k, sct.data,
-    map(x -> normalize(x, Nd),
-        sct.output))
+    map(x -> normalize(x, Nd), sct.output))

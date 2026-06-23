@@ -12,7 +12,7 @@ using Adapt
 using RecipesBase
 using Base: tail
 using ChainRulesCore
-using Plots # who cares about weight really?
+# using Plots # who cares about weight really?
 using Statistics
 using Dates
 
@@ -45,7 +45,4 @@ include("utilities.jl")
 export getWavelets, flatten, roll, importantCoords, batchOff, getParameters, getMeanFreq, computeLoc
 export roll, wrap, flatten, reshapeInputs
 include("adjoints.jl")
-include("scatteringplots.jl")
-export plotOriginalSignal1D, plotZerothLayer1D, plotFirstLayer1DSingleWavelet, gifFirstLayer1D, plotFirstLayer1DAll, plotFirstLayer1D, plotSecondLayer1DOld, plotSecondLayer1DSpecificPath, gifSecondLayer1DSubset, plotSecondLayer1DFixAndVary, plotSecondLayer1D, jointPlot1D
-export plotOriginalSignal2D, plotZerothLayer2D, plotFirstLayer2DSingleWavelet, visualizeFirstLayer2D, plotFirstLayer2D, plotFirstLayer2DAll, plotSecondLayer2DSingleWavelet, visualizeSecondLayer2D, plotSecondLayer2D
 end # end Module

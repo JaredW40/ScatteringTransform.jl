@@ -67,7 +67,7 @@ The resulting output of a scattering transform. `m` is the number of layers, whi
       ScatteredOut(output, k = 1)
 A less involved constructor given just a list or tuple of the output from each layer. `k` gives the signal dimension, as above, with the default that `k=1`.
   """
-function ScatteredOut(m, k, fixDim, n, q, T)
+function ScatteredOut(m, k, fixDim, n, q, T; arrType=Array)
     @assert m + 1 == size(n, 1)
     @assert m + 1 == length(q)
     @assert k == size(n, 2)
@@ -75,12 +75,12 @@ function ScatteredOut(m, k, fixDim, n, q, T)
     n = Int.(n)
     q = Int.(q)
     N = k + length(fixDim) + 1
-    output = [zeros(T, n[i, :]..., prod(q[1:(i-1)] .- 1), fixDim...) for i = 1:m+1]
+    output = [adapt(arrType, zeros(T, n[i, :]..., prod(q[1:(i-1)] .- 1), fixDim...)) for i = 1:m+1]
     return ScatteredOut{T,N}(m, k, output)
 end
 
 function ScatteredFull(m, k, fixDim::Array{<:Real,1}, n::Array{<:Real,2},
-    q::Array{<:Real,1}, T)
+    q::Array{<:Real,1}, T; arrType=Array)
     @assert m + 1 == size(n, 1)
     @assert m + 1 == length(q)
     @assert k == size(n, 2)
@@ -88,8 +88,8 @@ function ScatteredFull(m, k, fixDim::Array{<:Real,1}, n::Array{<:Real,2},
     n = Int.(n)
     q = Int.(q)
     N = k + length(fixDim) + 1
-    data = [zeros(T, n[i, :]..., prod(q[1:i] .- 1), fixDim...) for i = 1:m+1]
-    output = [zeros(T, n[i, :]..., prod(q[1:(i-1)] .- 1), fixDim...) for i = 1:m+1]
+    data = [adapt(arrType, zeros(T, n[i, :]..., prod(q[1:i] .- 1), fixDim...)) for i = 1:m+1]
+    output = [adapt(arrType, zeros(T, n[i, :]..., prod(q[1:(i-1)] .- 1), fixDim...)) for i = 1:m+1]
     return ScatteredFull{T,N}(m, k, data, output)
 end
 
@@ -136,7 +136,7 @@ return the input dimension size (also given by `sct.k`)
 ndims(sct::Scattered) = sct.k
 size(sct::ScatteredOut) = map(x -> size(x), sct.output)
 size(sct::ScatteredFull) = map(x -> size(x), sct.data)
-similar(sct::ScatteredOut) = ScatteredOut(map(x -> similar(arrayType(sct), axes(x)), sct.output), sct.k)
+similar(sct::ScatteredOut) = ScatteredOut(map(x -> similar(x), sct.output), sct.k)
 similar(sct::ScatteredFull) = ScatteredFull(map(x -> similar(x), sct.data), map(x -> similar(x), sct.output), sct.k)
 
 import Statistics.mean

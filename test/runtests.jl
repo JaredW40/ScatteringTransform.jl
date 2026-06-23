@@ -9,3 +9,4 @@ using Zygote
 
 include("pathTests.jl")
 include("fluxtests.jl")
+include("GPUTests.jl")
