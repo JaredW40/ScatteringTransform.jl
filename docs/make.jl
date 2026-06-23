@@ -3,12 +3,13 @@ ENV["GKSwstype"] = "100"
 ENV["LINES"] = "9"
 ENV["COLUMNS"] = "60"
 using Documenter, ScatteringTransform, ScatteringPlots
+import ScatteringPlotsExt
 mkpath("docs/src/figures")
 
 makedocs(
     sitename = "ScatteringTransform.jl",
     format = Documenter.HTML(),
-    modules = [ScatteringTransform, ScatteringPlots],
+    modules = [ScatteringTransform, ScatteringPlotsExt],
     authors="David Weber, Naoki Saito, Jared White",
     clean=true,
     checkdocs = :exports,
