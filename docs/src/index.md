@@ -16,6 +16,10 @@ For a comparable package in python, see [Kymatio](https://www.kymat.io/).
 
 ```@example ex
 using ScatteringTransform, ContinuousWavelets, Wavelets, Plots
+const ScatteringPlotsExt = Base.get_extension(ScatteringTransform, :ScatteringPlotsExt)
+import .ScatteringPlotsExt: plotZerothLayer1D, plotFirstLayer1D, plotFirstLayer1DAll,
+    plotSecondLayer1DFixAndVary, plotSecondLayer1DSpecificPath,
+    plotSecondLayer1D, jointPlot1D
 nothing # hide
 ```
 
