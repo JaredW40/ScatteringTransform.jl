@@ -5,6 +5,7 @@ Function that plots the zeroth layer of the scattering transform at a specified 
 function plotOriginalSignal1D(f; title="Original Signal", saveTo=nothing, index=1)
     plt = plot(f[:,1,index], title=title, legend=false, xlim=(0, length(f[:, 1, index])+1), color=:blue, margin=5Plots.mm, size=(720,480))
     if !isnothing(saveTo)
+        mkpath(dirname(saveTo))
         savefig(plt, saveTo)
     end
     return plt
@@ -17,6 +18,7 @@ Function that plots the zeroth layer of the scattering transform at a specified 
 function plotZerothLayer1D(sf; title="Zeroth Layer", saveTo=nothing, index=1)
     plt = plot(sf[0][:, 1, index], title=title, legend=false, xlim=(0, length(sf[0][:, 1, index])+1), color=:blue, margin=5Plots.mm, size=(720,480))
     if !isnothing(saveTo)
+        mkpath(dirname(saveTo))
         savefig(plt, saveTo)
     end
     return plt
@@ -39,6 +41,7 @@ function plotFirstLayer1DSingleWavelet(j, origLoc, origSig; title="First Layer",
     l = Plots.@layout [a; b{0.1h}; [b c]]
     plt = plot(space, org, ∇h, ∇̂h, layout=l, size=(1280, 720), margin=5Plots.mm)
     if !isnothing(saveTo)
+        mkpath(dirname(saveTo))
         savefig(plt, saveTo)
     end
     return plt
@@ -58,6 +61,7 @@ function gifFirstLayer1D(origLoc, origSig; fps=2, title="First Layer", saveTo=no
         frame(anim)
     end
     filepath = isnothing(saveTo) ? "tmp.gif" : saveTo
+    mkpath(dirname(filepath))
     return gif(anim, filepath, fps=fps)
 end
 
@@ -79,6 +83,7 @@ function plotFirstLayer1DAll(origLoc, origSig; title="First Layer", saveTo=nothi
     l = Plots.@layout [a; b{0.1h}; [b c]]
     plt = plot(space, org, ∇h, ∇̂h, layout=l, size=(1280, 720), margin=5Plots.mm)
     if !isnothing(saveTo)
+        mkpath(dirname(saveTo))
         savefig(plt, saveTo)
     end
     return plt
@@ -96,6 +101,7 @@ function plotFirstLayer1D(stw, St; title="First Layer", saveTo=nothing, index=1)
             xlabel="time index", ylabel="Frequency (Hz)", margin=5Plots.mm,
             color=:viridis, title="$title", size=(1280, 720))
     if !isnothing(saveTo)
+        mkpath(dirname(saveTo))
         savefig(plt, saveTo)
     end
     return plt
@@ -164,6 +170,7 @@ function plotSecondLayer1DSpecificPath(stw, St, firstLayerWaveletIndex, secondLa
     l = Plots.@layout [a{0.4h}; title{0.05h}; c; d{0.05h}]
     plt = plot(org, titlePlot, ∇h, normPlot, layout=l, margin=4Plots.mm, size=(1080,720))
     if !isnothing(saveTo)
+        mkpath(dirname(saveTo))
         savefig(plt, saveTo)
     end
     return plt
@@ -182,6 +189,7 @@ function gifSecondLayer1DSubset(stw, St, firstLayerWavelets, secondLayerWavelets
         plt = plotSecondLayer1DSpecificPath(stw, St, j, k, original; saveTo=nothing, index=index)
         frame(anim, plt)
     end
+    mkpath(dirname(saveTo))
     filepath = isnothing(saveTo) ? "tmp.gif" : saveTo
     return gif(anim, filepath, fps=fps)
 end
@@ -221,6 +229,7 @@ function plotSecondLayer1DFixAndVary(stw, St, firstLayerWavelets, secondLayerWav
             frame(anim, plt)
         end
     end
+    mkpath(dirname(saveTo))
     filepath = isnothing(saveTo) ? "tmp.gif" : saveTo
     return gif(anim, filepath, fps=fps)
 end
@@ -329,6 +338,7 @@ function plotSecondLayer1D(stw, St; saveTo=nothing, title="Second Layer results"
         end
     end
     if !isnothing(saveTo)
+        mkpath(dirname(saveTo))
         savefig(plt, saveTo)
     end
     return plt
@@ -399,6 +409,7 @@ function jointPlot1DOld(thingToPlot, thingName, cSymbol, St; saveTo=nothing, sha
     lay = Plots.@layout [o{0.00001h}; [[a b; c{0.1h} d{0.1h}] b{0.04w}]]
     plt = plot(titlePlot, p2, p1, extraPlot, p0, colorbarOnly, layout=lay, size=(1500,1000), margin=6Plots.mm, top_margin=2Plots.mm)
     if !isnothing(saveTo)
+        mkpath(dirname(saveTo))
         savefig(plt, saveTo)
     end
     return plt
@@ -466,6 +477,7 @@ function jointPlot1D(thingToPlot, thingName, cSymbol, St, origSig; saveTo=nothin
     lay = Plots.@layout [o{0.01h}; [[a b; c{0.1h} d{0.1h}] cb{0.04w}]]
     plt = plot(titlePlot, p2, p1, originalSignalPlot, p0, colorbarOnly, layout=lay, size=(1920,1080), margin=5Plots.mm, left_margin=10Plots.mm)
     if !isnothing(saveTo)
+        mkpath(dirname(saveTo))
         savefig(plt, saveTo)
     end
     return plt
@@ -480,6 +492,7 @@ Function that plots the original signal `origSig` and saves it to a desired loca
 function plotOriginalSignal2D(origSig; color=:grays, saveTo=nothing, index=1)
     plt = heatmap(origSig[:,:,1,index], title="Original Signal", legend=false, axis=false, color=color, colorbar=false, margin=5Plots.mm, size=(720,480))
     if !isnothing(saveTo)
+        mkpath(dirname(saveTo))
         savefig(plt, saveTo)
     end
     return plt
@@ -492,6 +505,7 @@ Function that plots the zeroth layer of the scattering transform at a specified 
 function plotZerothLayer2D(sf; color=:grays, saveTo=nothing, index=1)
     plt = heatmap(sf[0][:,:,1,index], title="Zeroth Layer", legend=false, axis=false, color=color, margin=5Plots.mm, size=(720,480))
     if !isnothing(saveTo)
+        mkpath(dirname(saveTo))
         savefig(plt, saveTo)
     end
     return plt
@@ -508,6 +522,7 @@ function plotFirstLayer2DSingleWavelet(j, sf, origSig; color=:grays, saveTo=noth
     l = Plots.@layout [a b]
     plt = plot(space, orig, layout=l, size=(1280, 720), margin=5Plots.mm)
     if !isnothing(saveTo)
+        mkpath(dirname(saveTo))
         savefig(plt, saveTo)
     end
     return plt
@@ -585,6 +600,7 @@ function plotFirstLayer2D(sf; color=:grays, saveTo=nothing, index=1)
     plt = plot(plots..., layout=(scale, nchannel), plot_title="First Layer", size=(1080, 960), margin=5Plots.mm)
 
     if !isnothing(saveTo)
+        mkpath(dirname(saveTo))
         savefig(plt, saveTo)
     end
     return plt
@@ -612,6 +628,7 @@ function plotFirstLayer2DAll(sf, origSig; saveTo=nothing, index=1, color=:grays,
     l = Plots.@layout [a b{1.0w}]
     plt = plot(space, orig, layout=l, size=(1280, 960), margin=5Plots.mm)
     if !isnothing(saveTo)
+        mkpath(dirname(saveTo))
         savefig(plt, saveTo)
     end
     return plt
@@ -629,6 +646,7 @@ function plotSecondLayer2DSingleWavelet(firstLayerWaveletIndex, secondLayerWavel
     l = Plots.@layout [a b]
     plt = plot(space, orig, layout=l, size=(1280, 720), margin=5Plots.mm)
     if !isnothing(saveTo)
+        mkpath(dirname(saveTo))
         savefig(plt, saveTo)
     end
     return plt
@@ -737,6 +755,7 @@ function plotSecondLayer2D(sf; color=:grays, saveTo=nothing, index=1)
     plt = plot(plots..., layout=(total_rows, total_cols), plot_title="Second Layer", 
                size=(2000, 2200), margin=2Plots.mm, dpi=150)
     if !isnothing(saveTo)
+        mkpath(dirname(saveTo))
         savefig(plt, saveTo)
     end
     return plt

@@ -26,7 +26,6 @@ nothing # hide
 As an example signal, let's work with a doppler signal:
 
 ```@example ex
-using Wavelets, Plots
 N = 2047
 signal = testfunction(N, "Doppler")
 plot(signal, legend=false, title="Doppler signal")
@@ -119,3 +118,8 @@ Finally, we can constuct a joint plot of much of our prior information. This plo
 ```@example ex
 jointPlot1D(sf, "Scattering Transform", :viridis, St, f)
 ```
+
+
+## Future Updates
+
+In the future we will be adding plotting support for the third layer of the Scattering Transform. In addition, 2D variants of the plotting functions will also be created and documented here with examples. 

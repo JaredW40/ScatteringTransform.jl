@@ -2,6 +2,8 @@ module ScatteringPlotsExt
 
 using ScatteringTransform
 using Plots
+using FFTW: rfft, irfft, fft, ifft
+using LinearAlgebra: norm
 
 include(joinpath(@__DIR__, "..", "src", "scatteringplots.jl"))
 export plotOriginalSignal1D, plotZerothLayer1D, plotFirstLayer1DSingleWavelet, gifFirstLayer1D, plotFirstLayer1DAll, plotFirstLayer1D, plotSecondLayer1DOld, plotSecondLayer1DSpecificPath, gifSecondLayer1DSubset, plotSecondLayer1DFixAndVary, plotSecondLayer1D, jointPlot1D
