@@ -1,16 +1,4 @@
 """
-    plotOriginalSignal1D(f; saveTo=nothing, index=1)
-Function that plots the original signal `f` and saves it to a desired location.  
-"""
-function plotOriginalSignal1D(f; saveTo=nothing, index=1)
-    plt = plot(f[:,1,index], title="Original Signal", legend=false, xlim=(0, length(f[:, 1, index])+1), color=:blue, margin=5Plots.mm, size=(720,480))
-    if !isnothing(saveTo)
-        savefig(plt, saveTo)
-    end
-    return plt
-end
-
-"""
     plotZerothLayer1D(sf; saveTo=nothing, index=1)
 Function that plots the zeroth layer of the scattering transform at a specified example index. 
 """

@@ -2,9 +2,9 @@ ENV["PLOTS_TEST"] = "true"
 ENV["GKSwstype"] = "100"
 ENV["LINES"] = "9"
 ENV["COLUMNS"] = "60"
-using Documenter, ScatteringTransform, ScatteringPlots
-import ScatteringPlotsExt
+using Documenter, ScatteringTransform, Plots
 mkpath("docs/src/figures")
+const ScatteringPlotsExt = Base.get_extension(ScatteringTransform, :ScatteringPlotsExt)
 
 makedocs(
     sitename = "ScatteringTransform.jl",
