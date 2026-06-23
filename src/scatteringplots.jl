@@ -490,11 +490,7 @@ end
 Function that plots the original signal `origSig` and saves it to a desired location.  
 """
 function plotOriginalSignal2D(origSig; color=:grays, saveTo=nothing, index=1)
-<<<<<<< HEAD
-    plt = heatmap(origSig[:,:,1,index], title="Original Signal", legend=false, axis=false, color=color, colorbar=false, margin=5Plots.mm, size=(720,720))
-=======
     plt = heatmap(origSig[:,:,1,index], title="Original Signal", legend=false, axis=false, color=color, colorbar=false, margin=5Plots.mm, size=(720,480))
->>>>>>> 3b17b96 (Added GPU support and tests.)
     if !isnothing(saveTo)
         savefig(plt, saveTo)
     end
