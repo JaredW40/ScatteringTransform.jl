@@ -14,8 +14,9 @@ For a comparable package in python, see [Kymatio](https://www.kymat.io/).
 
 ## Basic Example
 
-```@setup
-using ScatteringTransform, Wavelets, Plots
+```@example ex
+using ScatteringTransform, ContinuousWavelets, Wavelets, Plots
+nothing # hide
 ```
 
 As an example signal, let's work with a doppler signal:
@@ -36,7 +37,6 @@ The parameters are described in the `scatteringTransform` type. The function `re
 Since the Doppler signal is smooth, but with varying frequency, let's set the wavelet family `cw=Morlet(π)` specifies the mother wavelet to be a Morlet wavelet with mean frequency π, and frequency spacing `β=2`:
 
 ```@example ex
-using ScatteringTransform, ContinuousWavelets
 f, dims = reshapeInputs(signal)
 St = scatteringTransform(dims, 2, cw=Morlet(π), β=2, σ=abs)
 sf = St(f)
