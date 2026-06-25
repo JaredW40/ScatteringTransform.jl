@@ -14,17 +14,21 @@ For a comparable package in python, see [Kymatio](https://www.kymat.io/).
 
 ## Basic Example
 
-```@setup
-using ScatteringTransform, Wavelets, Plots
+```@example ex
+using ScatteringTransform, ContinuousWavelets, Wavelets, Plots
+const ScatteringPlotsExt = Base.get_extension(ScatteringTransform, :ScatteringPlotsExt)
+import .ScatteringPlotsExt: plotZerothLayer1D, plotFirstLayer1D, plotFirstLayer1DAll,
+    plotSecondLayer1DFixAndVary, plotSecondLayer1DSpecificPath,
+    plotSecondLayer1D, jointPlot1D
+nothing # hide
 ```
 
-As an example signal, lets work with the doppler signal:
+As an example signal, let's work with a doppler signal:
 
 ```@example ex
-using Wavelets, Plots
 N = 2047
-f = testfunction(N, "Doppler")
-plot(f, legend=false, title="Doppler signal")
+signal = testfunction(N, "Doppler")
+plot(signal, legend=false, title="Doppler signal")
 savefig("figures/rawDoppler.svg"); #hide
 nothing # hide
 ```
@@ -32,12 +36,12 @@ nothing # hide
 ![](figures/rawDoppler.svg)
 
 First we need to make a `scatteringTransform` instance, which will create and store all of the necessary filters, subsampling operators, nonlinear functions, etc.
-The parameters are described in the `scatteringTransform` type.
+The parameters are described in the `scatteringTransform` type. The function `reshapeInputs` converts data matrices and vectors into a usable form and returns the reshaped array and its dimensions. It works for any shaped input signal. 
 Since the Doppler signal is smooth, but with varying frequency, let's set the wavelet family `cw=Morlet(π)` specifies the mother wavelet to be a Morlet wavelet with mean frequency π, and frequency spacing `β=2`:
 
 ```@example ex
-using ScatteringTransform, ContinuousWavelets
-St = scatteringTransform((N, 1, 1), 2, cw=Morlet(π), β=2, σ=abs)
+f, dims = reshapeInputs(signal)
+St = scatteringTransform(dims, 2, cw=Morlet(π), β=2, σ=abs)
 sf = St(f)
 ```
 
@@ -56,7 +60,7 @@ plotZerothLayer1D(sf)
 The first layer is the average of the absolute value of the scalogram:
 
 ```@example ex
-plotFirstLayer(sf, St)
+plotFirstLayer1D(sf, St)
 ```
 
 With the plotting utilities included in this package, you are able to display the previous plot along with the original signal and the first layer wavelet gradients: 
@@ -73,7 +77,7 @@ With our plotting utilities, you can display the second layer with respect to sp
 To this end, lets make two gifs, the first with the _first_ layer frequency varying with time:
 
 ```@example ex
-plotSecondLayerFixAndVary(sf, St, 1:30, 1, fps=1, saveTo="figures/sliceByFirst.gif")
+plotSecondLayer1DFixAndVary(sf, St, 1:30, 1, fps=1, saveTo="figures/sliceByFirst.gif")
 nothing # hide
 ```
 ![](figures/sliceByFirst.gif)
@@ -84,7 +88,7 @@ As the first layer frequency increases, the energy concentrates to the beginning
 The second has the _second_ layer frequency varying with time:
 
 ```@example ex
-plotSecondLayerFixAndVary(sf, St, 1, 1:28, fps=1, saveTo="figures/sliceBySecond.gif")
+plotSecondLayer1DFixAndVary(sf, St, 1, 1:28, fps=1, saveTo="figures/sliceBySecond.gif")
 nothing # hide
 ```
 ![](figures/sliceBySecond.gif)
@@ -92,7 +96,7 @@ nothing # hide
 If desired, this package allows one to plot the results of a specific path. Here is an example, where we are plotting the resulting plot if we were to use first layer wavelet 3 and second layer wavelet 1. 
 
 ```@example ex
-plotSecondLayerSpecificPath(sf, St, 3, 1, f)
+plotSecondLayer1DSpecificPath(sf, St, 3, 1, f)
 ```
 
 For any fixed second layer frequency, we get approximately the curve in the first layer scalogram, with different portions emphasized, and the overall mass decreasing as the frequency increases, corresponding to the decreasing amplitude of the envelope for the doppler signal.
@@ -101,7 +105,7 @@ These plots can also be created using various plotting utilities defined in this
 For example, we can generate a denser representation with the `plotSecondLayer` function:
 
 ```@example ex
-plotSecondLayer(sf, St)
+plotSecondLayer1D(sf, St)
 ```
 
 where the frequencies are along the axes, the heatmap gives the largest value across time for that path, and at each path is a small plot of the averaged timecourse.
@@ -109,8 +113,13 @@ where the frequencies are along the axes, the heatmap gives the largest value ac
 
 ### Joint Plot
 
-Finally, we can constuct a joint plot of much of our prior information. This plot will display the zeroth layer, first layer and second layer information for a given example. 
+Finally, we can constuct a joint plot of much of our prior information. This plot will display the original signal, zeroth layer, first layer and second layer information for a given example. 
 
 ```@example ex
-jointPlot(sf, "Scattering Transform", :viridis, St)
+jointPlot1D(sf, "Scattering Transform", :viridis, St, f)
 ```
+
+
+## Future Updates
+
+In the future we will be adding plotting support for the third layer of the Scattering Transform. In addition, 2D variants of the plotting functions will also be created and documented here with examples. 

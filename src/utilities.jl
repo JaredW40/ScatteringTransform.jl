@@ -35,11 +35,11 @@ export adapt
 Get the wavelets used in each layer. If `spaceDomain` is `true`, then it will also convert the filters from the stored positive Fourier representation to a space version.
 """
 function getWavelets(sc::stFlux; spaceDomain=false)
-    freqDomain = map(x -> x.weight, filter(x -> (typeof(x) <: ConvFFT), sc.mainChain.layers)) # filter to only have ConvFFTs, and then return the wavelets of those
+    # freqDomain = map(x -> x.weight, filter(x -> (typeof(x) <: ConvFFT), sc.mainChain.layers)) # filter to only have ConvFFTs, and then return the wavelets of those
     if spaceDomain
         return map(originalDomain, filter(x -> (typeof(x) <: ConvFFT), sc.mainChain.layers))
     else
-        return map(x -> x.weight, filter(x -> (typeof(x) <: ConvFFT), sc.mainChain.layers))
+        return map(x -> x.weight, filter(x -> (typeof(x) <: ConvFFT), sc.mainChain.layers)) 
     end
 end
 
@@ -101,23 +101,32 @@ flatten(scatRes) = scatRes
 Given a scattering transform `st` and an array `toRoll` that is `NCoeffs×extraDims`, "roll" up `toRoll` into a `ScatteredOut`.
 """
 function roll(toRoll, st::stFlux)
+    toRoll = ChainRulesCore.unthunk(toRoll)
+    toRoll = collect(toRoll)
+
     Nd = ndims(st)
     oS = st.outputSizes
     roll(toRoll, oS, Nd)
 end
 
 function roll(toRoll, stOutput::S) where {S<:Scattered}
+    toRoll = ChainRulesCore.unthunk(toRoll)
+    toRoll = collect(toRoll)
+
     Nd = ndims(stOutput)
     oS = map(size, stOutput.output)
     return roll(toRoll, oS, Nd)
 end
 
+#=
 function roll(toRoll, oS::Tuple, Nd)
+    toRoll = collect(toRoll)
+
     nExamples = size(toRoll)[2:end]
-    rolled = ([adapt(typeof(toRoll), zeros(eltype(toRoll),
-        sz[1:Nd+nPathDims(ii)]...,
-        nExamples...)) for (ii, sz) in
-               enumerate(oS)]...,)
+    rolled = ([fill!(similar(toRoll, eltype(toRoll),
+    	sz[1:Nd+nPathDims(ii)]...,
+    	nExamples...),0) for (ii, sz) in
+           	enumerate(oS)]...,)
 
     locSoFar = 0
     for (ii, x) in enumerate(rolled)
@@ -128,6 +137,32 @@ function roll(toRoll, oS::Tuple, Nd)
         rolled[ii][:] = reshape(toRoll[range, :], addresses)
         locSoFar += totalThisLayer
     end
+    return ScatteredOut(rolled, Nd)
+end
+=#
+function roll(toRoll, oS::Tuple, Nd)
+    toRoll = collect(toRoll)
+
+    nExamples = ntuple(i -> size(toRoll, i+1), ndims(toRoll)-1)
+    rolled = ntuple(length(oS)) do ii
+        sz = oS[ii]
+        dims = (sz[1:Nd+nPathDims(ii)]..., nExamples...)
+        zeros(eltype(toRoll), dims)
+    end
+
+    locSoFar = 0
+    for (ii, x) in enumerate(rolled)
+        szThisLayer = oS[ii][1:Nd+nPathDims(ii)]
+        totalThisLayer = prod(szThisLayer)
+
+        range = (locSoFar+1):(locSoFar+totalThisLayer)
+        addresses = (szThisLayer..., nExamples...)
+
+        rolled[ii] .= reshape(toRoll[range, :], addresses)
+
+        locSoFar += totalThisLayer
+    end
+
     return ScatteredOut(rolled, Nd)
 end
 
@@ -170,18 +205,14 @@ transform `x` using `stack`, but where `x` and `stack` may have different batch 
 function batchOff(stack, x, batchSize)
     nRounds = ceil(Int, size(x)[end] // batchSize)
     firstRes = stack(x[:, :, :, 1:batchSize])
-    result = cu(zeros(size(firstRes)[1:end-1]..., size(x)[end]))
+    result = fill!(similar(firstRes, size(firstRes)[1:end-1]..., size(x)[end]), 0)
     result[:, 1:batchSize] = firstRes
     for i = 2:(nRounds-1)
         result[:, 1+(i-1)*batchSize:(i*batchSize)] = stack(x[:, :, :, 1+(i-1)*batchSize:(i*batchSize)])
     end
-    result[:, (1+(nRounds-1)*batchSize):end] = stack(cat(x[:, :, :,
-            (1+(nRounds-1)*batchSize):end],
-        cu(zeros(size(x)[1:3]...,
-            nRounds * batchSize
-            -
-            size(x, 4))),
-        dims=4))[:, 1:(size(x, 4)-(nRounds-1)*batchSize)]
+    padding = fill!(similar(x, size(x)[1:3]..., nRounds*batchSize - size(x,4)), 0)
+    result[:, (1+(nRounds-1)*batchSize):end] = stack(cat(x[:, :, :, 
+            (1+(nRounds-1)*batchSize):end], padding, dims=4))[:, 1:(size(x,4)-(nRounds-1)*batchSize)]
     return result
 end
 
@@ -240,6 +271,57 @@ function size(st::stFlux)
         sz = l.fftPlan.sz
         es = originalSize(sz[1:ndims(l.weight) - 1], l.bc)
     end
-
+    
     return es
+end
+
+
+"""
+    reshapeInputs(dataMat; is2DData=false) -> reshapedData, dims
+
+Reshapes a data matrix from (N, numSamples) format to (N, 1, numSamples) format. 
+Alos converts a data matrix from (N, M, numSamples) format to (N, M, numSamples) format. 
+Make signals suitable as scatteringTransform input. Can be used for 1D and 2D signals. 
+
+# Arguments
+- `dataMat`: Matrix where rows are data points and columns are different samples
+- `is2DData`: If `true`, treats the input as 2D data and reshapes accordingly. If `false`, treats the input as 1D data.
+
+# Returns
+- Reshaped array of size (N, M, numSamples)
+- Tuple of dimensions for scatteringTransform
+
+# Example
+```julia
+N = 2047
+f = testfunction(N, "Doppler")
+g = testfunction(N, "Bumps")
+dataMat = hcat(f, g)
+signals, dims = reshapeInputs(dataMat)
+St = scatteringTransform(dims, 2, cw=Morlet(π), β=2, σ=abs)
+sOut = St(signals)
+"""
+function reshapeInputs(dataMat; is2DData=false)
+    # Convert vector to column matrix if needed
+    if ndims(dataMat) == 1
+        dataMat = reshape(dataMat, :, 1)
+    end
+    
+    if ndims(dataMat) == 2
+        N, M = size(dataMat)
+        if is2DData
+            reshapedData = reshape(dataMat, N, M, 1, 1)
+            dims = (N, M, 1, 1)
+        else
+            reshapedData = reshape(dataMat, N, 1, M)
+            dims = (N, 1, M)
+        end
+    elseif ndims(dataMat) == 3
+        N, M, numInputs = size(dataMat)
+        reshapedData = reshape(dataMat, N, M, 1, numInputs)
+        dims = (N, M, 1, numInputs)
+    else
+        error("Input data must be a vector, matrix, or 3D array.")
+    end
+    return reshapedData, dims
 end

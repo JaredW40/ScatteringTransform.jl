@@ -1,14 +1,29 @@
 # Plotting Scattering Transforms
 
+
+## 1D Plotting Functions
 ```@docs
-ScatteringTransform.plotZerothLayer1D
-ScatteringTransform.plotFirstLayer1D
-ScatteringTransform.gifFirstLayer
-ScatteringTransform.plotFirstLayer1DAll
-ScatteringTransform.plotFirstLayer
-ScatteringTransform.plotSecondLayerSpecificPath
-ScatteringTransform.plotSecondLayer1DSubsetGif
-ScatteringTransform.plotSecondLayerFixAndVary
-ScatteringTransform.plotSecondLayer
-ScatteringTransform.jointPlot
+ScatteringPlotsExt.plotZerothLayer1D
+ScatteringPlotsExt.plotFirstLayer1DSingleWavelet
+ScatteringPlotsExt.gifFirstLayer1D
+ScatteringPlotsExt.plotFirstLayer1DAll
+ScatteringPlotsExt.plotFirstLayer1D
+ScatteringPlotsExt.plotSecondLayer1DSpecificPath
+ScatteringPlotsExt.gifSecondLayer1DSubset
+ScatteringPlotsExt.plotSecondLayer1DFixAndVary
+ScatteringPlotsExt.plotSecondLayer1D
+ScatteringPlotsExt.jointPlot1D
+```
+
+## 2D Plotting Functions
+```@docs
+ScatteringPlotsExt.plotOriginalSignal2D
+ScatteringPlotsExt.plotZerothLayer2D
+ScatteringPlotsExt.plotFirstLayer2DSingleWavelet
+ScatteringPlotsExt.visualizeFirstLayer2D
+ScatteringPlotsExt.plotFirstLayer2D
+ScatteringPlotsExt.plotFirstLayer2DAll
+ScatteringPlotsExt.plotSecondLayer2DSingleWavelet
+ScatteringPlotsExt.visualizeSecondLayer2D
+ScatteringPlotsExt.plotSecondLayer2D
 ```

@@ -1,0 +1,157 @@
+using ScatteringTransform
+using ContinuousWavelets
+using AbstractFFTs, FFTW
+using Test, LinearAlgebra, Statistics
+using Flux, FourierFilterFlux, CUDA
+using Zygote
+using BenchmarkTools
+
+const gpu_available = CUDA.functional()
+
+@testset "GPU Tests" begin
+    if !gpu_available
+        @warn "No functional GPU found — skipping GPU tests"
+    else
+        @info "CUDA functional — running GPU comparison and timing tests"
+
+        @testset "CPU/GPU consistency, 1D" begin
+            init = randn(Float32, 64, 1, 2)
+            sst = stFlux(size(init), 2, poolBy=3 // 2)
+
+            resCPU = sst(init)
+
+            sstGPU = cu(sst)
+            initGPU = cu(init)
+            resGPU = sstGPU(initGPU)
+
+            @test typeof(resGPU.output[1]) <: CuArray
+
+            for (cpuLayer, gpuLayer) in zip(resCPU.output, resGPU.output)
+                @test cpuLayer ≈ Array(gpuLayer) atol = 1e-3
+            end
+        end
+
+        #=
+        @testset "CPU/GPU consistency, 2D" begin
+            n_init_channels = 2
+            batch_size = 2
+            init = randn(Float32, 32, 32, n_init_channels, batch_size)
+            sst = stFlux(size(init), 2, poolBy=3 // 2, outputPool=(2,))
+
+            resCPU = sst(init)
+
+            sstGPU = cu(sst)
+            initGPU = cu(init)
+            resGPU = sstGPU(initGPU)
+
+            @test typeof(resGPU.output[1]) <: CuArray
+
+            for (cpuLayer, gpuLayer) in zip(resCPU.output, resGPU.output)
+                @test cpuLayer ≈ Array(gpuLayer) atol = 1e-3
+            end
+        end
+        =#
+
+        @testset "roll/flatten CPU vs GPU" begin
+            initCPU = randn(Float32, 64, 1, 2)
+            sst = stFlux(size(initCPU), 2, poolBy=3 // 2)
+            resCPU = sst(initCPU)
+            smooshedCPU = ScatteringTransform.flatten(resCPU)
+
+            sstGPU = cu(sst)
+            initGPU = cu(initCPU)
+            resGPU = sstGPU(initGPU)
+            smooshedGPU = ScatteringTransform.flatten(resGPU)
+
+            @test typeof(smooshedGPU) <: CuArray
+            @test Array(smooshedGPU) ≈ smooshedCPU atol = 1e-3
+
+            reconstCPU = roll(smooshedCPU, sst)
+            reconstGPU = roll(smooshedGPU, sstGPU)
+
+            @test all(reconstCPU .≈ resCPU)
+            for (cpuLayer, gpuLayer) in zip(reconstGPU.output, resGPU.output)
+                @test Array(cpuLayer) ≈ Array(gpuLayer) atol = 1e-3
+            end
+        end
+
+        @testset "normalize CPU vs GPU" begin
+            x = randn(Float32, 10, 4, 3, 5, 7)
+            xGPU = cu(x)
+
+            xpCPU = ScatteringTransform.normalize(x, 2)
+            xpGPU = ScatteringTransform.normalize(xGPU, 2)
+
+            @test typeof(xpGPU) <: CuArray
+            @test Array(xpGPU) ≈ xpCPU atol = 1e-3
+
+            for w in eachslice(xpCPU, dims=ndims(x))
+                @test norm(w, 2) ≈ 3 * 5
+            end
+            for w in eachslice(Array(xpGPU), dims=ndims(x))
+                @test norm(w, 2) ≈ 3 * 5
+            end
+        end
+
+        @testset "Gradients CPU vs GPU" begin
+            init = randn(Float32, 64, 1, 1)
+            initGPU = cu(init)
+            sst = stFlux(size(init), 2, poolBy=3 // 2)
+            sstGPU = cu(sst)
+
+            CUDA.allowscalar(true)
+            ∇CPU_Zeroth = Zygote.gradient(x -> sst(x)[0][19,1,1], init)[1]
+            ∇GPU_Zeroth = Zygote.gradient(x -> sstGPU(x)[0][19,1,1], initGPU)[1]
+
+            ∇CPU_First = Zygote.gradient(x -> sst(x)[1][11,5,1], init)[1]
+            ∇GPU_First = Zygote.gradient(x -> sstGPU(x)[1][11,5,1], initGPU)[1]
+
+            ∇CPU_Second = Zygote.gradient(x -> sst(x)[2][3,5,5,1], init)[1]
+            ∇GPU_Second = Zygote.gradient(x -> sstGPU(x)[2][3,5,5,1], initGPU)[1]
+
+            @test typeof(∇GPU_Zeroth) <: CuArray
+            @test Array(∇GPU_Zeroth) ≈ ∇CPU_Zeroth atol = 1e-3
+
+            @test typeof(∇GPU_First) <: CuArray
+            @test Array(∇GPU_First) ≈ ∇CPU_First atol = 1e-3
+
+            @test typeof(∇GPU_Second) <: CuArray
+            @test Array(∇GPU_Second) ≈ ∇CPU_Second atol = 1e-3
+        end
+
+        @testset "CPU/GPU timing" begin
+            sizes = [256, 2048, 16384, 131072]
+            cpu_max_size = 16384
+
+            for sz in sizes
+                GC.gc()
+                CUDA.reclaim()
+
+                init = randn(Float32, sz, 1, 1)
+                sst = stFlux(size(init), 2, poolBy=3 // 2)
+                sstGPU = cu(sst)
+                initGPU = cu(init)
+
+                if sz > cpu_max_size
+                    CUDA.@sync sstGPU(initGPU)  # warmup
+                    GC.gc(); CUDA.reclaim()
+                    tGPU = @elapsed (CUDA.@sync sstGPU(initGPU))
+                else
+                    tGPU = @belapsed (CUDA.@sync $sstGPU($initGPU))
+                end
+
+                tCPU = @belapsed $sst($init)
+                speedup = tCPU / tGPU
+                @info "size=$sz" tCPU tGPU speedup
+                if sz >= 512
+                     @test tGPU < tCPU
+                end
+
+                sstGPU = nothing
+                initGPU = nothing
+                GC.gc()
+                CUDA.reclaim()
+            end
+        end
+    end
+end

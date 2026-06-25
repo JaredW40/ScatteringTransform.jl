@@ -12,7 +12,7 @@ using Adapt
 using RecipesBase
 using Base: tail
 using ChainRulesCore
-using Plots # who cares about weight really?
+# using Plots # who cares about weight really?
 using Statistics
 using Dates
 
@@ -43,8 +43,24 @@ end
 
 include("utilities.jl")
 export getWavelets, flatten, roll, importantCoords, batchOff, getParameters, getMeanFreq, computeLoc
-export roll, wrap, flatten
+export roll, wrap, flatten, reshapeInputs
 include("adjoints.jl")
-include("scatteringplots.jl")
-export plotZerothLayer1D, plotFirstLayer1D, gifFirstLayer, plotFirstLayer1DAll, plotFirstLayer, plotSecondLayer, plotSecondLayer1D, plotSecondLayerSpecificPath, plotSecondLayer1DSubsetGif, plotSecondLayerFixAndVary, jointPlot
+
+for f in [:plotOriginalSignal1D, :plotZerothLayer1D, :plotFirstLayer1DSingleWavelet,
+          :gifFirstLayer1D, :plotFirstLayer1DAll, :plotFirstLayer1D,
+          :plotSecondLayer1DSpecificPath, :gifSecondLayer1DSubset,
+          :plotSecondLayer1DFixAndVary, :plotSecondLayer1D, :jointPlot1D,
+          :plotOriginalSignal2D, :plotZerothLayer2D, :plotFirstLayer2DSingleWavelet,
+          :visualizeFirstLayer2D, :plotFirstLayer2D, :plotFirstLayer2DAll,
+          :plotSecondLayer2DSingleWavelet, :visualizeSecondLayer2D, :plotSecondLayer2D]
+    @eval function $f(args...; kwargs...)
+        ext = Base.get_extension(ScatteringTransform, :ScatteringPlotsExt)
+        if isnothing(ext)
+            error("Load Plots.jl to use plotting functions: `using Plots`")
+        end
+        getfield(ext, $(QuoteNode(f)))(args...; kwargs...)
+    end
+    @eval export $f
+end
+
 end # end Module

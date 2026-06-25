@@ -2,13 +2,14 @@ ENV["PLOTS_TEST"] = "true"
 ENV["GKSwstype"] = "100"
 ENV["LINES"] = "9"
 ENV["COLUMNS"] = "60"
-using Documenter, ScatteringTransform, ScatteringPlots
+using Documenter, ScatteringTransform, Plots
 mkpath("docs/src/figures")
+const ScatteringPlotsExt = Base.get_extension(ScatteringTransform, :ScatteringPlotsExt)
 
 makedocs(
     sitename = "ScatteringTransform.jl",
     format = Documenter.HTML(),
-    modules = [ScatteringTransform, ScatteringPlots],
+    modules = [ScatteringTransform, ScatteringPlotsExt],
     authors="David Weber, Naoki Saito, Jared White",
     clean=true,
     checkdocs = :exports,
